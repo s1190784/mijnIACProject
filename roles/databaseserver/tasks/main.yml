@@ -1,0 +1,102 @@
+- name: Update apt cache and ensure software properties are installed
+  apt:
+    name: software-properties-common
+    update_cache: yes
+    cache_valid_time: 3600 # Update de cache als deze ouder is dan een uur
+  become: yes
+
+- name: Ensure Python 3 and pip are installed
+  apt:
+    name:
+      - python3-pip
+      - python3-dev
+    state: present
+  become: yes
+
+- name: Upgrade pip to the latest version
+  shell: python3 -m pip install --upgrade pip
+  become: yes
+
+- name: Install PyMySQL
+  pip:
+    name: PyMySQL
+    executable: pip3
+  become: yes
+
+- name: Install MySQL
+  apt:
+    name: mysql-server
+    state: present
+  become: yes
+
+- name: Ensure MySQL is running
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Change root password for all root accounts
+  mysql_user:
+    login_user: root
+    login_password: "{{ root_db_password }}"
+    name: root
+    password: "{{ root_db_password }}"
+    host_all: yes
+    state: present
+
+- name: Open MySQL to listen on all interfaces
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^bind-address'
+    line: 'bind-address = 0.0.0.0'
+    state: present
+  notify: restart mysql
+
+- name: Ensure MySQL/MariaDB database exists
+  mysql_db:
+    login_user: 'sqlusr'
+    login_password: 'root123'
+    name: "{{ db_name }}"
+    state: present
+  become: yes
+
+- name: Ensure MySQL/MariaDB user exists for all hosts
+  mysql_user:
+    login_user: 'root'
+    login_password: 'root123'
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: '{{ db_name }}.*:ALL'
+    state: present
+    host: '%'
+
+- name: Create a test table
+  mysql_query:
+    login_db: "{{ db_name }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+    query: |
+      CREATE TABLE IF NOT EXISTS testdata (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        data VARCHAR(255) NOT NULL
+      );
+  become: yes
+
+- name: Insert data into test table
+  mysql_query:
+    login_db: "{{ db_name }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+    query: |
+      INSERT INTO testdata (data) VALUES ('Hello, World!');
+  become: yes
+
+- name: Allow MySQL/MariaDB to listen on all interfaces
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^bind-address'
+    line: 'bind-address = 0.0.0.0'
+    state: present
+  become: yes
+  notify: restart mysql
