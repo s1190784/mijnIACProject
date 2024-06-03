@@ -1,0 +1,42 @@
+<?php
+// Foutmeldingen aanzetten voor debugging doeleinden
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Database connectiegegevens
+$host = '10.10.10.30'; // Het IP-adres van je databaseserver
+$dbname = 'webdata'; // De naam van je database
+$username = 'root'; // De gebruikersnaam voor je database
+$password = 'root123'; // Het wachtwoord voor je databasegebruiker
+
+// Probeer de databaseverbinding te maken
+$conn = new mysqli($host, $username, $password, $dbname);
+
+// Controleer de verbinding
+if ($conn->connect_error) {
+    die("Verbinding mislukt: " . $conn->connect_error);
+}
+
+// Query om data op te halen uit de database
+$sql = "SELECT data FROM testdata";
+$result = $conn->query($sql);
+
+if ($result->num_rows > 0) {
+    // Output data van elke rij
+    while($row = $result->fetch_assoc()) {
+        echo "Data: " . $row["data"]. "<br>";
+    }
+} else {
+    echo "0 resultaten gevonden";
+}
+
+// Sluit de databaseverbinding
+$conn->close();
+?>
+<!DOCTYPE html>
+<html>  
+  <body>
+    <p><?php echo "hostname is:".gethostname(); ?></p>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+# Configureer de loadbalancer
+---
+- name: Configure Load Balancer
+  hosts: loadbalancer
+  become: yes
+  roles:
+    - loadbalancer

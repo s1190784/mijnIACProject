@@ -1,0 +1,76 @@
+# Configureer de virtuele machines
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/focal64"
+
+  # Configureer webtest-servers
+  (1..2).each do |i|
+    config.vm.define "webtest#{i}" do |webtest|
+      webtest.vm.provider "virtualbox" do |v|
+        v.memory = 1024
+      end
+      webtest.vm.hostname = "webservertest#{i}"
+      webtest.vm.network "private_network", ip: "192.168.57.1#{i}"
+      config.vm.synced_folder "/home/toor/mijnIACProject/environments/test/ssh_keys", "/home/vagrant/mijnIACProject/ssh_keys"
+
+      webtest.vm.provision "shell", inline: <<-SHELL
+        echo "De nieuwe sleutel toevoegen..."
+        sudo dpkg --configure -a
+        if [ -f "/home/vagrant/mijnIACProject/ssh_keys/admin/webtest#{i}_server_admin.pub" ]; then
+          cat "/home/vagrant/mijnIACProject/ssh_keys/admin/webtest#{i}_server_admin.pub" >> /home/vagrant/.ssh/authorized_keys
+        fi
+        if [ -f "/home/vagrant/mijnIACProject/ssh_keys/customer1/webtest#{i}_server_customer1.pub" ]; then
+          cat "/home/vagrant/mijnIACProject/ssh_keys/customer1/webtest#{i}_server_customer1.pub" >> /home/vagrant/.ssh/authorized_keys
+        fi
+        chmod 600 /home/vagrant/.ssh/authorized_keys
+        chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
+        sudo dpkg --configure -a
+      SHELL
+    end
+  end
+
+  # Configureer load balancer test-server
+  config.vm.define "lbtest" do |lbtest|
+    lbtest.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+    end
+    lbtest.vm.hostname = "loadbalancertest"
+    lbtest.vm.network "private_network", ip: "192.168.57.20"
+    config.vm.synced_folder "/home/toor/mijnIACProject/environments/test/ssh_keys", "/home/vagrant/mijnIACProject/ssh_keys"
+    
+    lbtest.vm.provision "shell", inline: <<-SHELL
+      echo "De nieuwe sleutel toevoegen..."
+      sudo dpkg --configure -a
+      if [ -f "/home/vagrant/mijnIACProject/ssh_keys/admin/lbtest_server.admin.pub" ]; then
+        cat "/home/vagrant/mijnIACProject/ssh_keys/admin/lbtest_server.admin.pub" >> /home/vagrant/.ssh/authorized_keys
+      fi
+      if [ -f "/home/vagrant/mijnIACProject/ssh_keys/customer1/lbtest_server.customer1.pub" ]; then
+        cat "/home/vagrant/mijnIACProject/ssh_keys/customer1/lbtest_server.customer1.pub" >> /home/vagrant/.ssh/authorized_keys
+      fi
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+      chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
+    SHELL
+  end
+
+  # Configureer databaseserver test-server
+  config.vm.define "dbtest" do |dbtest|
+    dbtest.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+    end
+    dbtest.vm.hostname = "databaseservertest"
+    dbtest.vm.network "private_network", ip: "192.168.57.30"
+    config.vm.synced_folder "/home/toor/mijnIACProject/environments/test/ssh_keys", "/home/vagrant/mijnIACProject/ssh_keys"
+    
+    dbtest.vm.provision "shell", inline: <<-SHELL
+      echo "De nieuwe sleutel toevoegen..."
+      sudo dpkg --configure -a
+      if [ -f "/home/vagrant/mijnIACProject/ssh_keys/admin/dbtest_server_admin.pub" ]; then
+        cat "/home/vagrant/mijnIACProject/ssh_keys/admin/dbtest_server_admin.pub" >> /home/vagrant/.ssh/authorized_keys
+      fi
+      if [ -f "/home/vagrant/mijnIACProject/ssh_keys/customer1/dbtest_server_customer1.pub" ]; then
+        cat "/home/vagrant/mijnIACProject/ssh_keys/customer1/dbtest_server_customer1.pub" >> /home/vagrant/.ssh/authorized_keys
+      fi
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+      chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
+    SHELL
+  end
+end

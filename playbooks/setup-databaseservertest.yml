@@ -1,0 +1,13 @@
+# Configureer de databaseserver
+- name: Configure Database Server
+  hosts: databaseserver
+  become: yes
+  roles:
+    - databaseserver
+  vars:
+    db_name: webdata
+    db_user: sqlusr
+    db_password: root123
+
+
+

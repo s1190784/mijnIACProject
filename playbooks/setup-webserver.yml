@@ -1,0 +1,11 @@
+# Configureer de webserver
+- name: Configure Web Servers
+  hosts: webservers
+  become: yes
+  vars:
+    db_host: 192.168.56.30
+    db_user: sqlusr
+    db_password: root123
+    db_name: webdata
+  roles:
+    - webserver
