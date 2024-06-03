@@ -1,0 +1,67 @@
+# Configureer de virtuele machines
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/focal64"
+
+  # Configureer webservers
+  (1..2).each do |i|
+    config.vm.define "web#{i}" do |web|
+      web.vm.provider "virtualbox" do |v|
+        v.memory = 1024
+      end
+      web.vm.hostname = "webserver#{i}"
+      web.vm.network "private_network", ip: "192.168.56.1#{i}"
+      config.vm.synced_folder "/home/toor/mijnIACProject/environments/production/ssh_keys", "/home/vagrant/mijnIACProject/ssh_keys"
+
+      web.vm.provision "shell", inline: <<-SHELL
+        echo "De nieuwe sleutel toevoegen..."
+        sudo dpkg --configure -a
+        if [ -f "/home/vagrant/mijnIACProject/ssh_keys/web#{i}_2_server.pub" ]; then
+          cat "/home/vagrant/mijnIACProject/ssh_keys/web#{i}_2_server.pub" >> /home/vagrant/.ssh/authorized_keys
+        fi
+        chmod 600 /home/vagrant/.ssh/authorized_keys
+        chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
+        sudo dpkg --configure -a
+      SHELL
+    end
+  end
+
+  # Configureer load balancer
+  config.vm.define "lb" do |lb|
+    lb.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+    end
+    lb.vm.hostname = "loadbalancer"
+    lb.vm.network "private_network", ip: "192.168.56.20"
+    config.vm.synced_folder "/home/toor/mijnIACProject/environments/production/ssh_keys", "/home/vagrant/mijnIACProject/ssh_keys"
+    
+    lb.vm.provision "shell", inline: <<-SHELL
+      echo "De nieuwe sleutel toevoegen..."
+      sudo dpkg --configure -a
+      if [ -f "/home/vagrant/mijnIACProject/ssh_keys/lb_2_server.pub" ]; then
+        cat "/home/vagrant/mijnIACProject/ssh_keys/lb_2_server.pub" >> /home/vagrant/.ssh/authorized_keys
+      fi
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+      chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
+    SHELL
+  end
+
+  # Configureer databaseserver
+  config.vm.define "db" do |db|
+    db.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+    end
+    db.vm.hostname = "databaseserver"
+    db.vm.network "private_network", ip: "192.168.56.30"
+    config.vm.synced_folder "/home/toor/mijnIACProject/environments/production/ssh_keys", "/home/vagrant/mijnIACProject/ssh_keys"
+    
+    db.vm.provision "shell", inline: <<-SHELL
+      echo "De nieuwe sleutel toevoegen..."
+      sudo dpkg --configure -a
+      if [ -f "/home/vagrant/mijnIACProject/ssh_keys/db_2_server.pub" ]; then
+        cat "/home/vagrant/mijnIACProject/ssh_keys/db_2_server.pub" >> /home/vagrant/.ssh/authorized_keys
+      fi
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+      chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
+    SHELL
+  end
+end
