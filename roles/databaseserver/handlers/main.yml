@@ -1,0 +1,9 @@
+---
+# handlers file voor databaseserver
+
+# Herstart MySQL
+- name: restart mysql
+  service:
+    name: mysql
+    state: restarted
+  become: yes
